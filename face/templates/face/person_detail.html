@@ -1,0 +1,144 @@
+{% extends "face/layout.html" %}
+
+{% block extra_head %}
+<style>
+    .strike {
+        text-decoration: line-through !important;
+    }
+    header, #intro {
+        height: 100%;
+    }
+
+    #intro {
+        background: url("{{ person.photo_url }}") no-repeat center center fixed;
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+        background-size: cover;
+    }
+
+    .top-nav-collapse {
+        background-color: #24355C;
+    }
+
+    @media (max-width: 768px) {
+        .navbar:not(.top-nav-collapse) {
+            background: #24355C;
+        }
+    }
+
+    @media (min-width: 800px) and (max-width: 850px) {
+        .navbar:not(.top-nav-collapse) {
+            background: #24355C;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_header %}
+    <div id="intro" class="view">
+        <div class="mask rgba-black-strong">
+            <div class="container-fluid d-flex align-items-center justify-content-center h-100">
+                <div class="row d-flex justify-content-center text-center">
+                    <div class="col-md-12">
+                        <h2 class="display-4 font-weight-bold white-text pt-5 mb-2">
+                            {{ person.name }}
+                        </h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <main class="mt-5">
+        <div class="container smooth-scroll">
+            <section id="examples" class="text-center mt-3">
+                <div class="card-columns">
+                    {% for face in person.face_set.all %}
+                        {% with record=face.meta.FaceRecords.0 %}
+                            <div class="card">
+                                <img src="{{ face.photo.url }}" class="card-img-top" />
+                                <div class="card-body">
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            신뢰도
+                                            <span class="badge badge-primary badge-pill">
+                                                {{ record.FaceDetail.Confidence|floatformat }}%
+                                            </span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            연령
+                                            <span class="badge badge-primary badge-pill">
+                                                {{ record.FaceDetail.AgeRange.Low }} ~ {{ record.FaceDetail.AgeRange.High }}
+                                            </span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center {% if not record.FaceDetail.Smile.Value %}grey-text strike{% endif %}">
+                                            Smile
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center {% if not record.FaceDetail.Eyeglasses.Value %}grey-text strike{% endif %}">
+                                            Eye Glasses
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center {% if not record.FaceDetail.Sunglasses.Value %}grey-text strike{% endif %}">
+                                            Sun Glasses
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Gender
+                                            {% if record.FaceDetail.Gender.Value %}
+                                                <span class="badge badge-primary badge-pill">남성</span>
+                                            {% else %}
+                                                <span class="badge badge-default badge-pill">여성</span>
+                                            {% endif %}
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center {% if not record.FaceDetail.Beard.Value %}grey-text strike{% endif %}">
+                                            수염
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center {% if not record.FaceDetail.Mustache.Value %}grey-text strike{% endif %}">
+                                            코밑수염
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center {% if not record.FaceDetail.EyesOpen.Value %}grey-text strike{% endif %}">
+                                            Eyes Open
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center {% if not record.FaceDetail.MouthOpen.Value %}grey-text strike{% endif %}">
+                                            Mouth Open
+                                        </li>
+                                        {% for e in record.FaceDetail.Emotions %}
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                {{ e.Type }}
+                                                <span class="badge badge-primary badge-pill">
+                                                    {{ e.Confidence|floatformat }}%
+                                                </span>
+                                            </li>
+                                        {% endfor %}
+
+                                        {% for k, v in record.FaceDetail.Pose.items %}
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Pose {{ k }}
+                                                <span class="badge badge-primary badge-pill">
+                                                    {{ v|floatformat }}%
+                                                </span>
+                                            </li>
+                                        {% endfor %}
+
+                                        {% for k, v in record.FaceDetail.Quality.items %}
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                {{ k }}
+                                                <span class="badge badge-primary badge-pill">
+                                                    {{ v|floatformat }}%
+                                                </span>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+            </section>
+            <hr/>
+            <a href="{% url "index" %}" class="btn btn-primary btn-lg">목록</a>
+        </div>
+    </main>
+{% endblock %}
+

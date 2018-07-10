@@ -1,8 +1,10 @@
 import boto3
+from collections import OrderedDict
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models.signals import pre_save, post_save, post_delete
+from django.shortcuts import resolve_url
 from django.utils.functional import cached_property
 from jsonfield import JSONField
 
@@ -19,6 +21,27 @@ class Collection(models.Model):
 
     def __str__(self):
         return self.name
+
+    def search_faces(self, source_img, max_faces=3):
+        response = client.search_faces_by_image(
+              CollectionId=self.slug,
+              Image={'Bytes': source_img.read()},
+              MaxFaces=max_faces)
+
+        identified = OrderedDict()
+        for match in response['FaceMatches']:
+            similarity = match['Similarity']
+            person_pk = int(match['Face']['ExternalImageId'])
+
+            try:
+                person = Person.objects.get(pk=person_pk)
+            except Person.DoesNotExist:
+                pass
+            else:
+                recent_similarity = identified.get(person, 0)
+                identified[person] = max(recent_similarity, similarity)
+
+        return identified
 
     @classmethod
     def on_post_save(cls, sender, **kwargs):
@@ -42,16 +65,12 @@ class Person(models.Model):
     def __str__(self):
         return self.name
 
-'''
-    @classmethod
-    def on_post_delete(cls, sender, **kwargs):
-        self = kwargs['instance']
-        face_id_list = [face.face_id for face in self.face_set.all()]
-        print('delete face_id_list', face_id_list)
-        client.delete_faces(CollectionId=self.collection_id, FaceIds=face_id_list)
+    @property
+    def photo_url(self):
+        return self.face_set.first().photo.url
 
-post_delete.connect(Person.on_post_delete, sender=Person)
-'''
+    def get_absolute_url(self):
+        return resolve_url('person_detail', self.collection.slug, self.pk)
 
 
 class Face(models.Model):
@@ -80,16 +99,19 @@ class Face(models.Model):
         if self.meta:
             return self.meta['FaceModelVersion']
 
+    def indexing(self, attributes='ALL'):
+        return client.index_faces(
+            CollectionId=self.collection_id,
+            ExternalImageId=self.idol_id,
+            Image={'Bytes': self.photo.read()},
+            DetectionAttributes=[attributes])
+
     @classmethod
     def on_pre_save(cls, sender, **kwargs):
         self = kwargs['instance']
 
         if not self.meta:
-            self.meta = client.index_faces(
-                CollectionId=self.collection_id,
-                ExternalImageId=self.idol_id,
-                Image={'Bytes': self.photo.read()},
-                DetectionAttributes=['ALL'])
+            self.meta = self.indexing()
 
     @classmethod
     def on_post_delete(cls, sender, **kwargs):
