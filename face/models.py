@@ -99,19 +99,22 @@ class Face(models.Model):
         if self.meta:
             return self.meta['FaceModelVersion']
 
-    def indexing(self, attributes='ALL'):
-        return client.index_faces(
+    def indexing(self, attributes='ALL', commit=True):
+        self.meta = client.index_faces(
             CollectionId=self.collection_id,
             ExternalImageId=self.idol_id,
             Image={'Bytes': self.photo.read()},
             DetectionAttributes=[attributes])
+        if commit:
+            self.save()
+        return self.meta
 
     @classmethod
     def on_pre_save(cls, sender, **kwargs):
         self = kwargs['instance']
 
         if not self.meta:
-            self.meta = self.indexing()
+            self.indexing(commit=False)
 
     @classmethod
     def on_post_delete(cls, sender, **kwargs):
