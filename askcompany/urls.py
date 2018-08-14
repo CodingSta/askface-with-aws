@@ -1,4 +1,4 @@
-"""askdjango URL Configuration
+"""askcompany URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/2.0/topics/http/urls/
@@ -20,6 +20,7 @@ from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('plusfriend/', include('plusfriend.urls')),
     path('', include('face.urls')),
 ]
 

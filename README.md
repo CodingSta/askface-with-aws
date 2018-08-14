@@ -23,7 +23,7 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-## `askdjango/settings.py` 경로에 AWS 설정 정보를 넣어주세요.
+## `askcompany/settings.py` 경로에 AWS 설정 정보를 넣어주세요.
 
 다음 코드 부분을 직접 설정을 넣으실 수도 있지만, 보안 상의 이유로 아래 내역대로 환경변수를 통해 읽어들이시기를 추천합니다.
 
