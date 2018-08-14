@@ -5,6 +5,10 @@ from .models import Collection, Person, Face
 
 
 def index(request):
+    collection = Collection.objects.first()
+    if not collection:
+        return render(request, 'face/index.html')
+
     slug = Collection.objects.first().slug
     return redirect('collection_detail', slug)
 
